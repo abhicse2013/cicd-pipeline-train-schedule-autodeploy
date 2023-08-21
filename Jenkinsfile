@@ -41,38 +41,25 @@ pipeline {
         stage('CanaryDeploy') {
             when {
                 branch 'master'
-            }
-            environment { 
-                CANARY_REPLICAS = 1
-            }
+        
             steps {
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube-canary.yml',
-                    enableConfigSubstitution: true
-                )
+                     script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                    app.push("${env.BUILD_NUMBER}")
+                    app.push("latest")
+                    }
             }
         }
         stage('DeployToProduction') {
             when {
                 branch 'master'
             }
-            environment { 
-                CANARY_REPLICAS = 0
-            }
             steps {
-                input 'Deploy to Production?'
-                milestone(1)
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube-canary.yml',
-                    enableConfigSubstitution: true
-                )
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube.yml',
-                    enableConfigSubstitution: true
-                )
+                    script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                    app.push("${env.BUILD_NUMBER}")
+                    app.push("latest")
+                    }
             }
         }
     }
